@@ -28,13 +28,16 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
+import static android.hardware.SensorManager.*;
+
+public class MainActivity extends AppCompatActivity implements SensorEventListener
+         {
     static boolean status;
     static int p=0;
     static long startTime, endTime;
     static ProgressDialog progressDialog;
     LocationManager locationManager;
-    static Button startButton;
+    static Button startButton, stopButton;
     static TextView distanceTextView;
     static TextView stepCountTextView;
     static TextView stepMeasureTextView;
@@ -111,6 +114,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
         startButton = (Button) findViewById(R.id.startButton);
+        stopButton = (Button) findViewById(R.id.stopButton);
         distanceTextView=(TextView)findViewById(R.id.distanceTextView);
         stepCountTextView=(TextView)findViewById(R.id.stepCountTextView);
         stepMeasureTextView=(TextView)findViewById(R.id.stepMeasureTextView);
@@ -118,9 +122,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onClick(View v) {
 
-
+                p=0;
                 checkGPS();
-               // onResume();
+                onResume();
                 locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
                 if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
                     return;
@@ -132,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 progressDialog.setMessage("Getting location...");
                 progressDialog.show();
 
-                startButton.setVisibility(View.GONE);
+                //startButton.setVisibility(View.GONE);
             }
             });
 
@@ -148,7 +152,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 //         startButton.setVisibility(View.VISIBLE);
 //        }
 
-
+         stopButton.setOnClickListener(new View.OnClickListener() {
+             @Override
+             public void onClick(View v) {
+                 String distanceNow = distanceTextView.getText().toString();
+                 p=1;
+             }
+         });
 
 
     }
@@ -196,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             running = true;
             Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
             if (countSensor != null) {
-                sensorManager.registerListener(this, countSensor, SensorManager.SENSOR_DELAY_UI);
+                sensorManager.registerListener(this, countSensor, SENSOR_DELAY_UI);
             } else {
                 Toast.makeText(this, "Step Sensor Disabled", Toast.LENGTH_SHORT).show();
             }
@@ -213,7 +223,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if(running)
+        if(running && p==0)
         {
           stepCountTextView.setText(String.valueOf(event.values[0]));
 

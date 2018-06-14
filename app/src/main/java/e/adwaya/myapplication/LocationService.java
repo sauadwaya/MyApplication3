@@ -24,8 +24,8 @@ import java.util.concurrent.TimeUnit;
 
 public class LocationService extends Service implements GoogleApiClient.ConnectionCallbacks, com.google.android.gms.location.LocationListener, GoogleApiClient.OnConnectionFailedListener {
 
-private static final long INTERVAL = 1000*2;
-private static final long FASTEST_INTERVAL=1000;
+private static final long INTERVAL = 500*2;
+private static final long FASTEST_INTERVAL=500;
 LocationRequest mLocationRequest;
 GoogleApiClient mGoogleApiClient;
 Location mCurrentLocation, lStart, lEnd;
@@ -85,21 +85,21 @@ public void onConnected(@Nullable Bundle bundle)
     private void updateUI() {
         String stepsNow = String.valueOf(MainActivity.stepCountTextView.getText());
         double steps = Double.parseDouble(stepsNow);
-        if (MainActivity.p == 0 && steps>=stepToWalkBefore) {
+        if (MainActivity.p == 0 /*&& steps>=stepToWalkBefore*/) {
             distance += (lStart.distanceTo(lEnd));
 
             MainActivity.endTime = System.currentTimeMillis();
             long diff = MainActivity.endTime - MainActivity.startTime;
             diff = TimeUnit.MILLISECONDS.toMinutes(diff);
-            if (distance <= distToWalk) {
+           // if (distance <= distToWalk) {
                 MainActivity.distanceTextView.setText(new DecimalFormat("#.###").format(distance) + " meters");
 
-                if ((steps-stepToWalkBefore) != 0) {
-                    double stepMeasure = distance / (steps-stepToWalkBefore);
+//                if ((steps-stepToWalkBefore) != 0) {
+                   double stepMeasure = distance / (steps);
                     MainActivity.stepMeasureTextView.setText(stepMeasure + " meters");
-                }
+//                }
 
-            }
+            //}
             lStart = lEnd;
 //            else
 //            {
