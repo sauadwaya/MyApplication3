@@ -18,22 +18,29 @@ import android.hardware.TriggerEventListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.text.DecimalFormat;
 
 import static android.hardware.SensorManager.*;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener
          {
+
     static boolean status;
     static int p=0;
+    public static long timeDiff=0;
+    public static double stepCounter=0;
     static long startTime, endTime;
     static ProgressDialog progressDialog;
     LocationManager locationManager;
@@ -45,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     boolean running = false;
     LocationService myService;
     static int check=0;
+    public static double counterSteps=0;
     final String TAG = "MainActivity";
     private ServiceConnection sc=new ServiceConnection() {
         @Override
@@ -103,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);//does not allow phone to go to sleep...
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)!= PackageManager.PERMISSION_GRANTED)
         {
             requestPermissions(new String[]{
@@ -111,8 +120,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     Manifest.permission.ACCESS_COARSE_LOCATION
             },1000);
         }
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         startButton = (Button) findViewById(R.id.startButton);
         stopButton = (Button) findViewById(R.id.stopButton);
         distanceTextView=(TextView)findViewById(R.id.distanceTextView);
@@ -155,8 +164,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
          stopButton.setOnClickListener(new View.OnClickListener() {
              @Override
              public void onClick(View v) {
-                 String distanceNow = distanceTextView.getText().toString();
-                 p=1;
+                 MainActivity.p=1;
+                 MainActivity.counterSteps=0;
+                 LocationService.counter=0;
+
+
+                 Intent i2=new Intent(getApplicationContext(),Main2Activity.class);
+                 startActivity(i2);
+
              }
          });
 
@@ -223,9 +238,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+        if(counterSteps<1)
+        {
+            counterSteps=(double)(event.values[0]);
+        }
+
         if(running && p==0)
         {
-          stepCountTextView.setText(String.valueOf(event.values[0]));
+          stepCounter=(double)(event.values[0])-counterSteps;
+          stepCountTextView.setText(stepCounter+"");
 
         }
     }
