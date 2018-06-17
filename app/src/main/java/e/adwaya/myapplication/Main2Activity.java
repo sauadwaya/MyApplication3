@@ -9,7 +9,7 @@ import java.text.DecimalFormat;
 public class Main2Activity extends AppCompatActivity {
 
     private static DecimalFormat df2 = new DecimalFormat(".##");
-    public static final double distOverEst=2.25;
+    public static final double distOverEst=2.0;//earlier 2.25
     public static final double distUnderEst=0.60;
     public static int counterOver=0;
     public static int counterUnder=0;

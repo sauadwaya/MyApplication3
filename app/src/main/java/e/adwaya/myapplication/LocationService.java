@@ -3,6 +3,7 @@ package e.adwaya.myapplication;
 
 import android.app.Service;
 import android.content.Intent;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Binder;
 import android.os.Bundle;
@@ -44,6 +45,7 @@ static final double distToWalk=100.00;
 static final long timeToWalkBefore=5;
 public static int counter=0;
 public int counterCounter=0;
+
 private final IBinder mBinder = new LocalBinder();
 @Nullable
 @Override
