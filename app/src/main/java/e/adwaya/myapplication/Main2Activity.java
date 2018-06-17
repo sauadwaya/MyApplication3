@@ -49,6 +49,7 @@ public class Main2Activity extends AppCompatActivity {
 //        LocationService.distanceToAdd*=LocationService.stepMeasure;
 //        distanceNow+=LocationService.distanceToAdd;
         //distanceTextView.setText(distanceNow+"");
+        LocationService.stepMeasure=totalDist/MainActivity.stepCounter;
         finalDataTV.setText("Distance Travelled:\n " + new DecimalFormat("#.###").format(totalDist) + " meters\n"+ "  Time : \n" + MainActivity.timeDiff + " secs\n" + "No. of steps taken: \n" + MainActivity.stepCounter + "\nLength per step: \n" + LocationService.stepMeasure + " meters/step");
 
     }
