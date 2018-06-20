@@ -3,7 +3,7 @@ package e.adwaya.myapplication;
 
 import android.app.Service;
 import android.content.Intent;
-import android.hardware.SensorManager;
+
 import android.location.Location;
 import android.os.Binder;
 import android.os.Bundle;
