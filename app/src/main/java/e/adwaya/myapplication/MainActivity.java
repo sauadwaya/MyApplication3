@@ -36,8 +36,9 @@ import static android.hardware.SensorManager.*;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener
          {
-
-    static boolean status;
+             private SensorManager mSensorManager;
+             private Sensor mProximity;
+             static boolean status;
     static int p=0;
     public static long timeDiff=0;
     public static double stepCounter=0;
@@ -120,7 +121,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     Manifest.permission.ACCESS_COARSE_LOCATION
             },1000);
         }
-
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mProximity = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         startButton = (Button) findViewById(R.id.startButton);
         stopButton = (Button) findViewById(R.id.stopButton);
@@ -219,6 +221,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onResume();
 
             running = true;
+        mSensorManager.registerListener(this, mProximity, SensorManager.SENSOR_DELAY_NORMAL);
             Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
             if (countSensor != null) {
                 sensorManager.registerListener(this, countSensor, SENSOR_DELAY_UI);
@@ -234,21 +237,36 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         running=false;
         sensorManager.unregisterListener(this);
+        mSensorManager.unregisterListener(this);
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if(counterSteps<1)
-        {
-            counterSteps=(double)(event.values[0]);
-        }
+        if (event.sensor.getType() == Sensor.TYPE_PROXIMITY) {
+            float distance = event.values[0];
+            if(distance>4.0)
+            {
+                startButton.setEnabled(true);
+                stopButton.setEnabled(true);
+            }
+            else
+            {
+                startButton.setEnabled(false);
+                stopButton.setEnabled(false);
+            }
+            //
 
-        if(running && p==0)
-        {
-          stepCounter=(double)(event.values[0])-counterSteps;
-          stepCountTextView.setText(stepCounter+"");
+        } if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER){
+            if (counterSteps < 1) {
+                counterSteps = (double) (event.values[0]);
+            }
+
+        if (running && p == 0) {
+            stepCounter = (double) (event.values[0]) - counterSteps;
+            stepCountTextView.setText(stepCounter + "");
 
         }
+    }
     }
 
     @Override
