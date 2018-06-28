@@ -27,8 +27,8 @@ import java.util.concurrent.TimeUnit;
 
 public class LocationService extends Service implements GoogleApiClient.ConnectionCallbacks, com.google.android.gms.location.LocationListener, GoogleApiClient.OnConnectionFailedListener {
 
-private static final long INTERVAL = 5000*2;
-private static final long FASTEST_INTERVAL=5000;
+private static final long INTERVAL = 500*2;
+private static final long FASTEST_INTERVAL=500;
 LocationRequest mLocationRequest;
 GoogleApiClient mGoogleApiClient;
 Location mCurrentLocation, lStart, lEnd;
@@ -39,13 +39,9 @@ public static List smallDis = new ArrayList();
 public static List cumulativeDis=new ArrayList();
 public double prevDis=0;
 public static double stepMeasure=0;
-public static final double distanceAnomaly=18;//height of tallest man in the world
-public static double distanceToSubtract=0;
-public static double distanceToAdd=0;
-static final double distToWalk=100.00;
-static final long timeToWalkBefore=5;
+
 public static int counter=0;
-public int counterCounter=0;
+
 
 private final IBinder mBinder = new LocalBinder();
 @Nullable
@@ -96,9 +92,8 @@ public void onConnected(@Nullable Bundle bundle)
     }
 
     private void updateUI() {
-      //  String stepsNow = String.valueOf(MainActivity.stepCountTextView.getText());
-      //  double steps = Double.parseDouble(stepsNow);
-        if (MainActivity.p == 0 /*&& steps>=stepToWalkBefore*/) {
+
+        if (MainActivity.p == 0 ) {
             distance += (lStart.distanceTo(lEnd));
             MainActivity.endTime = System.currentTimeMillis();
             long diff = MainActivity.endTime - MainActivity.startTime;
@@ -106,17 +101,10 @@ public void onConnected(@Nullable Bundle bundle)
             smallDis.add(distance-prevDis);
             cumulativeDis.add(distance);
             timeStore.add(diff);
-//            if(distance>=distanceAnomaly && diff==timeToWalkBefore)
-//            {
-//                //counter++;
-//                distanceToSubtract=distance;
-//                distanceToAdd=MainActivity.stepCounter;
-//
-//              //  System.exit(0);
-//            }
+
 
             MainActivity.timeDiff=diff;
-           // if (distance <= distToWalk) {
+
                 MainActivity.distanceTextView.setText(new DecimalFormat("#.###").format(distance) + " meters" + "  Time : " + diff + " secs");
 
                 if (MainActivity.stepCounter != 0) {
@@ -124,14 +112,10 @@ public void onConnected(@Nullable Bundle bundle)
                     MainActivity.stepMeasureTextView.setText(stepMeasure + " meters");
               }
 
-            //}
+
             lStart = lEnd;
                 prevDis=distance;
-//            else
-//            {
-////                MainActivity mm=new MainActivity();
-//                MainActivity.unbindService();
-//            }
+
         }
     }
 

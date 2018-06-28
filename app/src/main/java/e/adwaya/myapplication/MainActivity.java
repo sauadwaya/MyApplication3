@@ -152,17 +152,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
             });
 
-//        double distance=Double.parseDouble(distanceTextView.getText().toString());
-//        if(distance>=100.000)
-//        {
-//         unbindService();
-//         String step=stepCountTextView.getText().toString();
-//         double steps=Double.parseDouble(step);
-//         double stepMeasure = distance/steps;
-//         stepMeasureTextView.setText(stepMeasure+"");
-//         //running=false;
-//         startButton.setVisibility(View.VISIBLE);
-//        }
 
          stopButton.setOnClickListener(new View.OnClickListener() {
              @Override
