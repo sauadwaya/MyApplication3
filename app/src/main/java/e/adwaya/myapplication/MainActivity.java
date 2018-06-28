@@ -31,6 +31,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.text.DecimalFormat;
+import java.util.concurrent.TimeUnit;
 
 import static android.hardware.SensorManager.*;
 
@@ -169,7 +170,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                  MainActivity.p=1;
                  MainActivity.counterSteps=0;
                  LocationService.counter=0;
-
+                 MainActivity.endTime = System.currentTimeMillis();
+                 long diff = MainActivity.endTime - MainActivity.startTime;
+                 diff = TimeUnit.MILLISECONDS.toSeconds(diff);
+                 MainActivity.timeDiff=diff;
 
                  Intent i2=new Intent(getApplicationContext(),Main2Activity.class);
                  startActivity(i2);

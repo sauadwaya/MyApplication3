@@ -27,11 +27,12 @@ import java.util.concurrent.TimeUnit;
 
 public class LocationService extends Service implements GoogleApiClient.ConnectionCallbacks, com.google.android.gms.location.LocationListener, GoogleApiClient.OnConnectionFailedListener {
 
-private static final long INTERVAL = 500*2;
-private static final long FASTEST_INTERVAL=500;
+private static final long INTERVAL = 5000*2;
+private static final long FASTEST_INTERVAL=5000;
 LocationRequest mLocationRequest;
 GoogleApiClient mGoogleApiClient;
 Location mCurrentLocation, lStart, lEnd;
+public static int count=0;
 static double distance=0.0;
 public static List timeStore = new ArrayList();
 public static List smallDis = new ArrayList();
