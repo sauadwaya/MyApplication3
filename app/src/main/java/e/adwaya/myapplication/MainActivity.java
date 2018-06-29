@@ -17,9 +17,11 @@ import android.hardware.TriggerEvent;
 import android.hardware.TriggerEventListener;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.speech.tts.TextToSpeech;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -30,13 +32,17 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.w3c.dom.Text;
+
 import java.text.DecimalFormat;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import static android.hardware.SensorManager.*;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener
          {
+             public static TextToSpeech textToSpeech;
              private SensorManager mSensorManager;
              private Sensor mProximity;
              static boolean status;
@@ -46,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     static long startTime, endTime;
     static ProgressDialog progressDialog;
     LocationManager locationManager;
-    static Button startButton, stopButton;
+    static Button startButton;
     static TextView distanceTextView;
     static TextView stepCountTextView;
     static TextView stepMeasureTextView;
@@ -73,6 +79,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     {
         if(status==true)
             unbindService();
+        if(textToSpeech!=null)
+        {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+        }
         super.onDestroy();
 
     }
@@ -114,6 +125,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);//does not allow phone to go to sleep...
+       // stopButton.setVisibility(View.INVISIBLE);
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)!= PackageManager.PERMISSION_GRANTED)
         {
             requestPermissions(new String[]{
@@ -122,11 +134,30 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     Manifest.permission.ACCESS_COARSE_LOCATION
             },1000);
         }
+
+        textToSpeech = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status==TextToSpeech.SUCCESS)
+                {
+                    int result=textToSpeech.setLanguage(Locale.CANADA);
+                    if(result== TextToSpeech.LANG_MISSING_DATA || result== TextToSpeech.LANG_NOT_SUPPORTED)
+                    {
+                        Toast.makeText(MainActivity.this,"This language is not supported", Toast.LENGTH_SHORT).show();
+                    }
+                    else {
+                        textToSpeech.setPitch(0.7f);
+                        textToSpeech.setSpeechRate(1.0f);
+                         speak();
+                    }
+                }
+            }
+        });
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mProximity = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         startButton = (Button) findViewById(R.id.startButton);
-        stopButton = (Button) findViewById(R.id.stopButton);
+
         distanceTextView=(TextView)findViewById(R.id.distanceTextView);
         stepCountTextView=(TextView)findViewById(R.id.stepCountTextView);
         stepMeasureTextView=(TextView)findViewById(R.id.stepMeasureTextView);
@@ -134,41 +165,40 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onClick(View v) {
 
-                p=0;
-                checkGPS();
-                onResume();
-                locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-                if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-                    return;
-                if (status == false)
-                    bindService();
-                progressDialog = new ProgressDialog(MainActivity.this);
-                progressDialog.setIndeterminate(true);
-                progressDialog.setCancelable(false);
-                progressDialog.setMessage("Getting location...");
-                progressDialog.show();
+                if(startButton.getText().toString().equalsIgnoreCase("Start")) {
+                    p = 0;
+                    startButton.setText("Stop");
+                    checkGPS();
+                    onResume();
+                    locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+                    if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                        return;
+                    if (status == false)
+                        bindService();
+                    progressDialog = new ProgressDialog(MainActivity.this);
+                    progressDialog.setIndeterminate(true);
+                    progressDialog.setCancelable(false);
+                    progressDialog.setMessage("Getting location...");
+                    progressDialog.show();
+                }
+                else
+                {
 
-                //startButton.setVisibility(View.GONE);
+                    MainActivity.p=1;
+                    MainActivity.counterSteps=0;
+                    LocationService.counter=0;
+                    MainActivity.endTime = System.currentTimeMillis();
+                    long diff = MainActivity.endTime - MainActivity.startTime;
+                    diff = TimeUnit.MILLISECONDS.toSeconds(diff);
+                    MainActivity.timeDiff=diff;
+
+                    Intent i2=new Intent(getApplicationContext(),Main2Activity.class);
+                    startActivity(i2);
+                }
             }
             });
 
 
-         stopButton.setOnClickListener(new View.OnClickListener() {
-             @Override
-             public void onClick(View v) {
-                 MainActivity.p=1;
-                 MainActivity.counterSteps=0;
-                 LocationService.counter=0;
-                 MainActivity.endTime = System.currentTimeMillis();
-                 long diff = MainActivity.endTime - MainActivity.startTime;
-                 diff = TimeUnit.MILLISECONDS.toSeconds(diff);
-                 MainActivity.timeDiff=diff;
-
-                 Intent i2=new Intent(getApplicationContext(),Main2Activity.class);
-                 startActivity(i2);
-
-             }
-         });
 
 
     }
@@ -177,7 +207,42 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
             showGPSDisabledAlert();
     }
+    public static void speak()
+    {
+        String text=" Press the large button on the middle.";
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP)
+            textToSpeech.speak(text,TextToSpeech.QUEUE_FLUSH,null,null);
+        else
+            textToSpeech.speak(text,TextToSpeech.QUEUE_FLUSH,null);
 
+    }
+    public static void speakOn()
+             {
+                 String text="DON'T START WALKING UNTIL INSTRUCTED. ";
+                 if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP)
+                     textToSpeech.speak(text,TextToSpeech.QUEUE_FLUSH,null,null);
+                 else
+                     textToSpeech.speak(text,TextToSpeech.QUEUE_FLUSH,null);
+
+             }
+    public static void AlternateSpeak()
+             {
+                 String text="Start Walking now. Press Stop when you want ";
+                 if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP)
+                     textToSpeech.speak(text,TextToSpeech.QUEUE_FLUSH,null,null);
+                 else
+                     textToSpeech.speak(text,TextToSpeech.QUEUE_FLUSH,null);
+
+             }
+             public static void AlternateSpeak2()
+             {
+                 String text="Start Walking now. Press Stop when you want ";
+                 if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP)
+                     textToSpeech.speak(text,TextToSpeech.QUEUE_ADD,null,null);
+                 else
+                     textToSpeech.speak(text,TextToSpeech.QUEUE_ADD,null);
+
+             }
     private void showGPSDisabledAlert()
     {
         AlertDialog.Builder alertDialogBuilder =new AlertDialog.Builder(this);
@@ -240,12 +305,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             if(distance>4.0)
             {
                 startButton.setEnabled(true);
-                stopButton.setEnabled(true);
+
             }
             else
             {
                 startButton.setEnabled(false);
-                stopButton.setEnabled(false);
+                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
             }
             //
 
