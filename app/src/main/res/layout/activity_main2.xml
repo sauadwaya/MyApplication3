@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="e.adwaya.myapplication.Main2Activity">
+    tools:context="e.adwaya.myapplication.ErrorProcessor">
 
     <TextView
         android:id="@+id/disDataTV"
