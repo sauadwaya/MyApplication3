@@ -14,6 +14,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:text="......"
+        android:contentDescription="@null"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -27,6 +28,7 @@
         android:layout_marginStart="8dp"
         android:text="Length per step:"
         android:textStyle="bold"
+        android:contentDescription="@null"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/distanceTextView"
         app:layout_constraintHorizontal_bias="0.14"
@@ -40,6 +42,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:text="0.00"
+        android:contentDescription="@null"
         app:layout_constraintBottom_toTopOf="@+id/stepCountTextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -53,6 +56,7 @@
         android:layout_marginStart="8dp"
         android:text="No. of steps:"
         android:textStyle="bold"
+        android:contentDescription="@null"
         app:layout_constraintBottom_toBottomOf="@+id/DistLabel"
         app:layout_constraintEnd_toStartOf="@+id/stepCountTextView"
         app:layout_constraintHorizontal_bias="0.101"
@@ -66,6 +70,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:text="0.00"
+        android:contentDescription="@null"
         app:layout_constraintBottom_toTopOf="@+id/stepMeasureTextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -79,6 +84,7 @@
         android:layout_marginStart="8dp"
         android:text="Distance:                "
         android:textStyle="bold"
+        android:contentDescription="@null"
         app:layout_constraintBottom_toBottomOf="@+id/DistLabel"
         app:layout_constraintEnd_toStartOf="@+id/stepMeasureTextView"
         app:layout_constraintHorizontal_bias="0.205"
@@ -92,6 +98,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:text="0.00"
+        android:contentDescription="@null"
         app:layout_constraintBottom_toTopOf="@+id/stopButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -104,6 +111,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
+        android:contentDescription="@null"
         android:text="Start"
         app:layout_constraintBottom_toTopOf="@+id/distanceTextView"
         app:layout_constraintEnd_toEndOf="parent"

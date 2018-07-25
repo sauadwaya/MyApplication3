@@ -34,40 +34,44 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
          {
              //Global variables
 
-             private static final long INTERVAL = 500*2; //stores GPS refresh rate
-             Location mCurrentLocation, lStart, lEnd;  //stores starting location, end location, current location for each GPS call
+             private static final long INTERVAL = 500*2;           //stores GPS refresh rate
+             Location mCurrentLocation, lStart, lEnd;              //stores starting location, end location, current location for each GPS call
              public static int count=0;
-             static double distance=0.0;   //stores distance for each GPS update
-             public static List timeStore = new ArrayList();  //stores time difference between each update
-             public static List smallDis = new ArrayList();
-             public static List cumulativeDis=new ArrayList();
-             public static List accuracyReads=new ArrayList();
-             public static List stepReads=new ArrayList();
-             public double prevDis=0;
-             public static double stepMeasure=0;
-             public static int count2=0;
-             public static float accuracy=30;
-             public static TextToSpeech textToSpeech;
-             private SensorManager mSensorManager;
-             private Sensor mProximity;
-    static int p=0;
-    public float distanceProx=5;
-    public static long timeDiff=0;
-    public static double stepCounter=0;
-    static long startTime, endTime;
-             LocationManager locationManager;
-             LocationListener locationListener;
+             static double distance=0.0;                           //stores distance for each GPS update
+             public static List timeStore = new ArrayList();       //stores time difference between each update
+             public static List smallDis = new ArrayList();        // stores distance difference between each update
+             public static List cumulativeDis=new ArrayList();     // stores cumulative distance at the end of each time update
+             public static List accuracyReads=new ArrayList();     // stores the accuracy at each time update
+             public static List stepReads=new ArrayList();         // stores the no. of steps between each time update
+             public double prevDis=0;                              // stores the total distance covered by the end of the previous tmestamp, in order to calculate small distances covered between each timestamp
+             public static double stepMeasure=0;                   // with each consecutive read, it stores the current measure of each step the user took
+             public static int count2=0;                           // To maker sure the instruction to start walking (once GPS accuracy have been achieved) is said only once
+             public static float accuracy=30;                      // stores the current accuracy of the location being reported
+             public static TextToSpeech textToSpeech;              // text to speech object to give instructions to the user to find step length
+             private SensorManager mSensorManager;                 // sensor manager to initiate the proximity sensor
+             private Sensor mProximity;                            // the proximity sensor which is used to return the proximity of the screen to any object
+             static int p=0;                                        // Value which denotes whether the user has completed a testing or not and if it is time to activate the ErrorProcessing class to get data once user has walked the desired distance (recommended at least walk for 10 seconds to get good results)
+             public float distanceProx=5;                           // Stores the distance of minimum proximity allowed and if the proximity sensor returns any value less than 5 m, then the screen will be made untouchable so no other external factors come into play while the app is running
+             public static long timeDiff=0;                         // stores the time difference between each update
+             public static double stepCounter=0;                    // stores the number of steps walked by the user
+             static long startTime, endTime;                      // stores the start and end time of the user
+             LocationManager locationManager;                     // Location Manager to start location updates
+             LocationListener locationListener;                   // location listener to listen for each new location
 
-             static Button startButton;
-    static TextView distanceTextView;
-    static TextView stepCountTextView;
-    static TextView stepMeasureTextView;
-    SensorManager sensorManager;
-    boolean running = false;
-    Criteria criteria;
-    public static double counterSteps=0;
+             static Button startButton;                            // Button to represent the START button which the user can click
+    static TextView distanceTextView;                              // Text view to represent the distance covered by the user while running the app
+    static TextView stepCountTextView;                             // Text view to represent the number of steps walked by the user
+    static TextView stepMeasureTextView;                           // Text view to represent the step length of the user as the user walks
+    SensorManager sensorManager;                                   // Sensor Manager to initiate the step counter sensor
+    boolean running = false;                                       // boolean storing whether the app is running a test or not
+    Criteria criteria;                                             // Criteria object to refine the gps call for most accurate location, as accurate as possible
+    public static double counterSteps=0;                           // Store the initial number of steps since last reboot at the time the app is first opened. To get the correct step reading..
+    public double prevSteps=0;                                     // Count the step count since the last timestamp so as to store how many steps were walked between each timestamp
 
-    protected void onDestroy()
+
+             //un-registering all sensors onDestroy to prevent memory leak
+
+             protected void onDestroy()
     {
 
         sensorManager.unregisterListener(this);
@@ -85,9 +89,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);//does not allow phone to go to sleep...
-       // stopButton.setVisibility(View.INVISIBLE);
 
-
+        // declaring text to speech object
         textToSpeech = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
@@ -99,13 +102,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         Toast.makeText(MainActivity.this,"This language is not supported", Toast.LENGTH_SHORT).show();
                     }
                     else {
-                        textToSpeech.setPitch(0.7f);
+                        textToSpeech.setPitch(5.0f);
                         textToSpeech.setSpeechRate(1.0f);
                          speak();
                     }
                 }
             }
         });
+
+        //setting up all sensor managers, buttons, text-views, and criteria object
+
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mProximity = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -123,6 +129,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         criteria.setBearingRequired(false);
         criteria.setHorizontalAccuracy(Criteria.ACCURACY_HIGH);
         criteria.setVerticalAccuracy(Criteria.ACCURACY_HIGH);
+
+        //defining functionality of the start button and the process it should initiate once it is clicked by the user (Note: once the user presses the Start button, the text on it changes to "STOP" and the user can press the same button to stop the step-measuring process and proceed to obtain data)
+
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -133,10 +142,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                     startButton.setEnabled(false);
 
-                    locationDetails();
+                    //function which beings the testing process
+
+                        locationDetails();
                 }
                 else
                 {
+                    //if here, the user has pressed stop and the ErrorProcessor class is ready to run to obtain data
+
                     if(locationListener!=null)
                         locationManager.removeUpdates(locationListener);
 
@@ -153,10 +166,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         textToSpeech.stop();
                         textToSpeech.shutdown();
                     }
+                    if(timeStore.size()!=0) {
 
-                    Intent i2=new Intent(getApplicationContext(),ErrorProcessor.class);
-                    startActivity(i2);
+                        //starts the ErrorProcessor class once the user is done with the test
 
+                        Intent i2 = new Intent(getApplicationContext(), ErrorProcessor.class);
+                        startActivity(i2);
+                    }
 
                 }
             }
@@ -181,9 +197,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                  }
 
              }
+
+   //declaring the different text instructions the user should get under different situations
+
     public static void speak()
     {
-        String text=" Press the large button on the middle.";
+        String text="Press the large button on the middle to start.";
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP)
             textToSpeech.speak(text,TextToSpeech.QUEUE_FLUSH,null,null);
         else
@@ -218,13 +237,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
              }
 
+
+             //Method started once the user is ready to start the test
+
              public void locationDetails(){
                     //ensures that interval has been set
-
+                    // Until a location update is received whose accuracy is less than or equal to 4m, the user is told to wait
                      locationListener = new LocationListener() {
                          @Override
                          public void onLocationChanged(Location location) {
                              accuracy=location.getAccuracy();
+
+                             //If accuracy of the received location is less than 4m, then the user is instructed to start walking
+
 
                              if(accuracy<=4) {
 
@@ -247,6 +272,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                      lEnd = mCurrentLocation;
                                  //accuracyReads.add(accuracy);//David's idea....
 
+
+                                 //stores distance, steps, and time covered with each location update
                                      if (MainActivity.p == 0 ) {
                                          distance += (lStart.distanceTo(lEnd));
                                          MainActivity.endTime = System.currentTimeMillis();
@@ -255,7 +282,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                          smallDis.add(distance-prevDis);
                                          cumulativeDis.add(distance);
                                          timeStore.add(diff);
-                                         stepReads.add(MainActivity.stepCounter);
+                                         double noOfSteps=MainActivity.stepCounter;
+                                         stepReads.add(noOfSteps-prevSteps);
                                          accuracyReads.add(accuracy);
                                          MainActivity.timeDiff=diff;
 
@@ -269,7 +297,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                                          lStart = lEnd;
                                          prevDis=distance;
-
+                                         prevSteps=noOfSteps;
                                      }
 
                              }
@@ -311,6 +339,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                          Toast.makeText(this, "GPS not available", Toast.LENGTH_LONG);
                      }
 
+
+                     //Code to handle the GPS updates at an interval of 1 second
+
+
                      //if at least Marshmallow, need to ask user's permission to get GPS data
                      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                          //if permission is not yet granted, ask for it
@@ -346,6 +378,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+
+        // handles the proximity sensor, making sure the screen cannot be accidentally touched when the phone is kept in a pocket
         if (event.sensor.getType() == Sensor.TYPE_PROXIMITY) {
              distanceProx = event.values[0];
             if(distanceProx>4.0)
@@ -358,9 +392,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 startButton.setEnabled(false);
                 getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
             }
-            //
 
-        } if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER){
+
+        }
+
+        //handles the step counting process
+        if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER){
             if (counterSteps < 1) {
                 counterSteps = (double) (event.values[0]);
             }
